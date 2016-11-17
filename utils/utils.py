@@ -55,30 +55,6 @@ def compute_weights(labels):
         weights[labels == label] = 1. / sum(labels == label)
     weights /= numpy.mean(weights) + 1e-10
     return weights
-        
-        
-def compute_labels_and_weights(pdg_column):
-    """
-    Compute labels column (from zero to five) and weight (sum of weights for each class are the same - balanced data).
-    
-    :param array pdg_column: pdg value for each sample
-    :return: labels, weights
-    """
-    labels = numpy.abs(pdg_column).astype(int)
-    mask = numpy.zeros(len(labels), dtype=bool)
-    for key, val in names_pdg_correspondence.items():
-        if key == 'Ghost':
-            continue
-        mask = mask | (labels == val)
-    labels[~(mask)] = 0 # all other particles are not tracks, so they are GHOST also
-    
-    for key, value in names_labels_correspondence.items():
-        labels[labels == names_pdg_correspondence[key]] = value
-    weights = numpy.ones(len(labels))
-    for label in names_labels_correspondence.values():
-        weights[labels == label] = 1. / sum(labels == label)
-    weights /= numpy.mean(weights) + 1e-10
-    return labels, weights
 
 
 def compute_charges(pdg_column):
