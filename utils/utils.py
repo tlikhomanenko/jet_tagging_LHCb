@@ -81,7 +81,7 @@ def roc_auc_score_one_vs_all(labels, pred, sample_weight):
         pred = numpy.vstack([pred] * len(numpy.unique(labels))).T
 
     for label in numpy.unique(labels):
-        rocs[label] = [roc_auc_score(labels == label, pred[:, label], sample_weight=sample_weight)]
+        rocs[str(label)] = [roc_auc_score(labels == label, pred[:, label], sample_weight=sample_weight)]
     return pandas.DataFrame(rocs)
 
 
@@ -105,7 +105,7 @@ def roc_auc_score_one_vs_all_for_separate_algorithms(labels, pred, sample_weight
     """
     rocs = OrderedDict()
     for label in numpy.array(labels):
-        rocs[label] = [roc_auc_score(labels == label, pred[label], sample_weight=sample_weight)]
+        rocs[str(label)] = [roc_auc_score(labels == label, pred[label], sample_weight=sample_weight)]
     return pandas.DataFrame(rocs)
 
 
@@ -132,11 +132,16 @@ def compute_cum_sum(data, features, prefix_name="", scale=False):
 
 def plot_hist_features(data, labels, features, bins=30, ignored_sideband=0.01):
     """
-    Plot histogram of features with values > -500.
-    
-    :param pandas.DataFrame data: data with features
-    :param array labels: labels (from 0 to 5)
-    :param list features: plotted features
+    Plot histogram of features with values.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        Data with features.
+    labels : array_like
+        Labels (0, 1, 2, ...).
+    features : array_like
+        Plotted features.
     """
     labels = numpy.array(labels)
     for n, f in enumerate(features):
@@ -145,8 +150,8 @@ def plot_hist_features(data, labels, features, bins=30, ignored_sideband=0.01):
         temp_labels = numpy.array(labels)[temp_values != -999]
         temp_values = temp_values[temp_values != -999]
         v_min, v_max = numpy.percentile(temp_values, [ignored_sideband * 100, (1. - ignored_sideband) * 100])
-        for key, val in names_labels_correspondence.items():  
-            plt.hist(temp_values[temp_labels == val], label=key, alpha=0.2, normed=True, bins=bins, range=(v_min, v_max))
+        for label in numpy.unique(labels):
+            plt.hist(temp_values[temp_labels == label], label=str(label), alpha=0.2, normed=True, bins=bins, range=(v_min, v_max))
         plt.legend(loc='best')
         plt.title(f)
         
