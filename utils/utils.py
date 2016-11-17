@@ -451,47 +451,6 @@ def compute_eta(track_p, track_pt):
 
     return eta
 
-
-class ClassifiersFactoryByClass(ClassifiersFactory):
-    def fit(self, X, y, sample_weight=None, parallel_profile=None, features=None):
-        """
-        Train all estimators on the same data.
-        :param X: pandas.DataFrame of shape [n_samples, n_features] with features
-        :param y: array-like of shape [n_samples] with labels of samples
-        :param sample_weight: weights of events,
-        array-like of shape [n_samples] or None if all weights are equal
-        :param features: features to train estimators
-        If None, estimators will be trained on `estimator.features`
-        :type features: None or list[str]
-        :param parallel_profile: profile of parallel execution system or None
-        :type parallel_profile: None or str
-        :return: self
-        """
-        if features is not None:
-            for name, estimator in self.items():
-                if estimator.features is not None:
-                    print('Overwriting features of estimator ' + name)
-                self[name].set_params(features=features)
-
-        start_time = time.time()
-        labels = []
-        for key in self.keys():
-            labels.append((y == names_labels_correspondence[key]) * 1)
-        result = map_on_cluster(parallel_profile, train_estimator, list(self.keys()), list(self.values()),
-                                [X] * len(self), labels, [sample_weight] * len(self))
-        for status, data in result:
-            if status == 'success':
-                name, estimator, spent_time = data
-                self[name] = estimator
-                print('model {:12} was trained in {:.2f} seconds'.format(name, spent_time))
-            else:
-                print('Problem while training on the node, report:\n', data)
-
-        print("Totally spent {:.2f} seconds on training".format(time.time() - start_time))
-        return self
-
-import os
-
 def get_eta(track_p, track_pt):
 
     """
