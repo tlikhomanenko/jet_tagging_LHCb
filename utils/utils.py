@@ -57,24 +57,6 @@ def compute_weights(labels):
     return weights
 
 
-def compute_charges(pdg_column):
-    """
-    Compute charge for each track to check charges assymetry for the algorithm.
-    Charge can be -1, +1 and 0 (zero corresponds to GHOST tracks)
-    
-    :param array pdg_column: pdg value for each sample, it has the sign
-    :return: charges
-    """
-    charges = numpy.zeros(len(pdg_column))
-    charges[pdg_column == 11] = -1
-    charges[pdg_column == 13] = -1
-    charges[(pdg_column == 321) | (pdg_column == 211) | (pdg_column == 2212)] = 1
-    charges[pdg_column == -11] = 1
-    charges[pdg_column == -13] = 1
-    charges[(pdg_column == -321) | (pdg_column == -211) | (pdg_column == -2212)] = -1
-    return charges
-
-
 def roc_auc_score_one_vs_all(labels, pred, sample_weight):
     """
     Compute ROC AUC values for (one vs rest).
