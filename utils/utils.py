@@ -448,3 +448,25 @@ def generate_plots(preds, labels, weights, data, path=''):
 
 
 #    return matrix
+
+
+def plot_feature_importances(feature_importances, features):
+
+    imp = numpy.array(feature_importances)
+    names = numpy.array(features)
+    sort = imp.argsort()
+
+    plt.figure(figsize=(12, 8))
+    plt.barh(range(len(imp)), imp[sort], align='center', color='b')
+    plt.yticks(range(len(names)), names[sort], rotation=0)
+
+    #plt.legend(loc="best", prop={'size':25},  shadow=True, fancybox=True)
+    plt.title("Feature Importances", fontsize=15)
+    plt.xlabel('Importance', fontsize=15)
+    #plt.ylabel('TPR', fontsize=15)
+    plt.xticks(fontsize=15)
+    plt.yticks(fontsize=12)
+    plt.ylim(-0.5, len(names))
+    #plt.xlim(0., 0.2)
+    plt.grid(linewidth=1)
+    plt.show()
