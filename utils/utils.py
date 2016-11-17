@@ -19,7 +19,7 @@ from rep.metaml import ClassifiersFactory
 
 
 
-labels_names_correspondence = {0: "b jets", 1:"c jets", 2: "light jetc"}
+labels_names_correspondence = {0: "b jets", 1:"c jets", 2: "light jets"}
 labels_names_correspondence = OrderedDict(sorted(labels_names_correspondence.items()))
 names_labels_correspondence = OrderedDict(map(lambda (x, y): (y, x), labels_names_correspondence.items()))
 
