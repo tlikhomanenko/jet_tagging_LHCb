@@ -481,7 +481,7 @@ def generate_plots(preds, labels, weights, data, path=''):
     plt.savefig(os.path.join(path, 'pt_flatness.png'), format='png')
 
 
-    plot_flatness_by_particle(labels, preds, data.JetETA,
+    plot_flatness_by_particle(labels, preds, data.JetEta,
                               'Pseudo Rapidity', thresholds=[5, 20, 40, 60, 80], weights=weights,
                               ignored_sideband=0.02)
     plt.savefig(os.path.join(path, 'eta_flatness.png'), format='png')
@@ -489,7 +489,7 @@ def generate_plots(preds, labels, weights, data, path=''):
 
     cvm_values = compute_cvm_by_particle(labels, preds,
                                          {'PT': data.JetPT.values,
-                                          'ETA':data.JetETA})
+                                          'ETA':data.JetEta})
 
     print (cvm_values)
     cvm_values.to_csv(os.path.join(path, 'flatness.csv'))
