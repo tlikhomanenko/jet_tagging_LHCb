@@ -64,7 +64,7 @@ def roc_auc_score_one_vs_all(labels, pred, sample_weight):
     Parameters
     ----------
     labels : array_like
-        Labels (0, 1, 2, ...)
+        Labels (0, 1, 2, ...).
     pred : array_like or ndarray
         Predictions. 1d to use it for each class, or ndim: each column corresponds to only one class.
     sample_weight : array_like
@@ -73,7 +73,7 @@ def roc_auc_score_one_vs_all(labels, pred, sample_weight):
     Return
     ------
     rocs : pandas.dataFrame
-        ROC AUC values for each class
+        ROC AUC values for each class.
     """
     rocs = OrderedDict()
 
@@ -88,15 +88,24 @@ def roc_auc_score_one_vs_all(labels, pred, sample_weight):
 def roc_auc_score_one_vs_all_for_separate_algorithms(labels, pred, sample_weight):
     """
     Compute ROC AUC values for (one vs rest).
-    
-    :param array labels: labels (from 0 to 5)
-    :param dict pred: predcitions for ech label to be signal
-    :param array sample_weight: weights
-    :return: pandas.DataFrame with ROC AUC values for each class
+
+    Parameters
+    ----------
+    labels : array)like
+        Labels (0, 1, 2, ...).
+    pred : dict
+        Predcitions for ech label to be signal.
+    sample_weight : array_like
+        Weights.
+
+    Return
+    ------
+    rocs : pandas.DataFrame
+        ROC AUC values for each class.
     """
     rocs = OrderedDict()
-    for key, label in names_labels_correspondence.items():
-        rocs[key] = [roc_auc_score(labels == label, pred[label], sample_weight=sample_weight)]
+    for label in numpy.array(labels):
+        rocs[label] = [roc_auc_score(labels == label, pred[label], sample_weight=sample_weight)]
     return pandas.DataFrame(rocs)
 
 
