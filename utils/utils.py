@@ -51,7 +51,7 @@ def compute_weights(labels):
     """
 
     weights = numpy.ones(len(labels))
-    for label in labels:
+    for label in numpy.unique(labels):
         weights[labels == label] = 1. / sum(labels == label)
     weights /= numpy.mean(weights) + 1e-10
     return weights
