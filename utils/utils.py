@@ -130,21 +130,6 @@ def compute_cum_sum(data, features, prefix_name="", scale=False):
     return pandas.DataFrame(cum_features, index=None)
 
 
-def convert_DLL_to_LL(data, features):
-    """
-    Compute Likelihood for each particle from the DLL=Likelihood_particle - Likelihood_pion. We assume that probabilities are sum up to 1. Actually each probability is computed independently and they should not be summed up to 1.
-    
-    :param pandas.DataFrame data: data with DLL features
-    :param list features: DLL features
-    :return: pandas.DataFrame with features names + '_LL' 
-    """
-    temp_data = data[features].values
-    temp_data -= temp_data.max(axis=1, keepdims=True)
-    temp_data = numpy.exp(temp_data)
-    temp_data /= numpy.sum(temp_data, axis=1, keepdims=True)
-    return pandas.DataFrame(numpy.log(numpy.clip(temp_data, 1e-6, 10)), columns=map(lambda x: x + '_LL', features))
-
-
 def plot_hist_features(data, labels, features, bins=30, ignored_sideband=0.01):
     """
     Plot histogram of features with values > -500.
