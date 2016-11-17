@@ -34,6 +34,27 @@ def shrink_floats(data):
     for column in data.columns:
         if data[column].dtype == 'float64':
             data[column] = data[column].astype('float32')
+
+def compute_weights(labels):
+    """
+    Compute weight (sum of weights for each class are the same - balanced data).
+
+    Parameters
+    ----------
+    labels : array_like
+        Label values of samples.
+
+    Return
+    ------
+    weights : array_like
+        Weight of the each sample.
+    """
+
+    weights = numpy.ones(len(labels))
+    for label in labels:
+        weights[labels == label] = 1. / sum(labels == label)
+    weights /= numpy.mean(weights) + 1e-10
+    return weights
         
         
 def compute_labels_and_weights(pdg_column):
