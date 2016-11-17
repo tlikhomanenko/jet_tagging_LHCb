@@ -425,13 +425,14 @@ def plot_flatness_particle(labels, predictions_dict, spectator, spectator_name, 
 
     
 def compute_cvm_by_particle(labels, predictions_dict, spectators):
+
     cvm_values = defaultdict(list)
     for spectator_name, spectator in spectators.items():
-        for n, (name, label) in enumerate(names_labels_correspondence.items()):
+        for n, (label) in enumerate(numpy.unique(labels)):
             mask =labels == label
             probs = predictions_dict[label][mask]
             cvm_values[spectator_name].append(compute_cvm(probs, spectator[mask]))
-    return pandas.DataFrame(cvm_values, index=names_labels_correspondence.keys())
+    return pandas.DataFrame(cvm_values, index=[str(i) for i in numpy.unique(labels)])
 
 
 def compute_eta(track_p, track_pt):
