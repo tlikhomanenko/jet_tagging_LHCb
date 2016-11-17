@@ -393,10 +393,11 @@ def plot_flatness_by_particle(labels, predictions_dict, spectator, spectator_nam
 def plot_flatness_particle(labels, predictions_dict, spectator, spectator_name, particle_name, 
                            weights=None, bins_number=30, ignored_sideband=0.1, 
                            thresholds=None, cuts_values=False):
+
     plt.figure(figsize=(18, 22))
-    for n, (name, label) in enumerate(names_labels_correspondence.items()):
+    for n, (label) in enumerate(numpy.unique(labels)):
         plt.subplot(3, 2, n + 1)
-        mask = labels == names_labels_correspondence[particle_name]
+        mask = labels == label
         probs = predictions_dict[label][mask]
         mask_signal = labels == label
         probs_signal = predictions_dict[label][mask_signal]
@@ -415,7 +416,7 @@ def plot_flatness_particle(labels, predictions_dict, spectator, spectator_name, 
         plot_fig = ErrorPlot(eff)
         plot_fig.xlabel = '{} {}'.format(particle_name, spectator_name)
         plot_fig.ylabel = 'Efficiency'
-        plot_fig.title = 'MVA {}'.format(name)
+        plot_fig.title = 'MVA {}'.format(str(label))
         plot_fig.ylim = (0, 100)
         plot_fig.plot(fontsize=22)
         plt.xticks(fontsize=12), plt.yticks(fontsize=12)
