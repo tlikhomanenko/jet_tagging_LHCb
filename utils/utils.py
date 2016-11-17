@@ -15,6 +15,7 @@ from rep.metaml.utils import map_on_cluster
 from rep.metaml.factory import train_estimator
 import time
 from rep.metaml import ClassifiersFactory
+import os
 
 
 
