@@ -325,8 +325,8 @@ def compute_roc_auc_matrix(labels, predictions_dict, weights=None):
             roc_auc_matrices[label, label_vs] = roc_auc_score(labels[mask] == label, predictions_dict[label][mask],
                                                               sample_weight=weights if weights is None else weights[mask])
         
-    matrix = pandas.DataFrame(roc_auc_matrices, columns=names_labels_correspondence.keys(),
-                              index=names_labels_correspondence.keys())
+    matrix = pandas.DataFrame(roc_auc_matrices, columns=[str(i) for i in numpy.unique(labels)],
+                              index=[str(i) for i in numpy.unique(labels)])
 
     fig=plot_matrix(matrix)
     return fig, matrix
