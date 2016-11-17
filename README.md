@@ -1,3 +1,3 @@
-# LHCb Jets Tagging
+# LHCb Jet Tagging
 
 ![jets](pic/jets1.png)
