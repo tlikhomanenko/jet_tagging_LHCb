@@ -303,16 +303,21 @@ def compute_roc_auc_matrix(labels, predictions_dict, weights=None):
     """
     Calculate class vs class roc aucs matrix.
     
-    :param array labels: labels form 0 to 5
-    :param dict(array) predictions_dict: dict of label/predictions
-    :param array weights: sample weights
+    Parameters
+    ----------
+    labels : array_like
+        Labels (0, 1, 2, ...).
+    predictions_dict : dict
+        Dict of label/predictions.
+    weights : array_like
+        Sample weights.
     """
 
     # Calculate roc_auc_matrices
 
-    roc_auc_matrices = numpy.ones(shape=[len(labels_names_correspondence)] * 2)
-    for label, name in labels_names_correspondence.items():
-        for label_vs, name_vs in labels_names_correspondence.items():
+    roc_auc_matrices = numpy.ones(shape=[len(numpy.unique(labels))] * 2)
+    for label in numpy.unique(labels):
+        for label_vs in numpy.unique(labels):
             if label == label_vs:
                 continue
             mask = (labels == label) | (labels == label_vs)
