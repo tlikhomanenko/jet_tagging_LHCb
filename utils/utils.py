@@ -232,16 +232,22 @@ def compute_cvm(predictions, masses, n_neighbours=200, step=50):
 def plot_roc_one_vs_rest(labels, predictions_dict, weights=None, physics_notion=False, predictions_dict_comparison=None, separate_particles=False, algorithms_name=('MVA', 'baseline')):
     """
     Plot roc curves one versus rest.
-    
-    :param array labels: labels form 0 to 5
-    :param dict(array) predictions_dict: dict of label/predictions
-    :param array weights: sample weights
+
+    Parameters
+    ----------
+    labels : array_like
+        Labels (0, 1, 2, ...).
+    predictions_dict : dict
+        Dict of label/predictions.
+    weights : array_like
+        Sample weights.
     """
     if separate_particles:
         plt.figure(figsize=(22, 22))
     else:
         plt.figure(figsize=(10, 8))
-    for label, name in labels_names_correspondence.items():
+
+    for label in numpy.unique(labels):
         if separate_particles:
             plt.subplot(3, 2, label + 1)
         for preds, prefix in zip([predictions_dict, predictions_dict_comparison], algorithms_name):
@@ -250,10 +256,10 @@ def plot_roc_one_vs_rest(labels, predictions_dict, weights=None, physics_notion=
             fpr, tpr, _ = roc_curve(labels == label, preds[label], sample_weight=weights)
             auc = roc_auc_score(labels == label, preds[label], sample_weight=weights)
             if physics_notion:
-                plt.plot(tpr * 100, fpr * 100, label='{}, {}, AUC={:1.5f}'.format(prefix, name, auc), linewidth=2)
+                plt.plot(tpr * 100, fpr * 100, label='{}, {}, AUC={:1.5f}'.format(prefix, str(label), auc), linewidth=2)
                 plt.yscale('log', nonposy='clip')
             else:
-                plt.plot(tpr, 1-fpr, label='{}, AUC={:1.5f}'.format(name, auc), linewidth=2)
+                plt.plot(tpr, 1-fpr, label='{}, AUC={:1.5f}'.format(str(label), auc), linewidth=2)
         if physics_notion:
             plt.xlabel('Efficiency', fontsize=22)
             plt.ylabel('Overall MisID Efficiency', fontsize=22)
