@@ -451,32 +451,9 @@ def compute_eta(track_p, track_pt):
 
     return eta
 
-def get_eta(track_p, track_pt):
-
-    """
-    Calculate pseudo rapidity values.
-
-    Parameters
-    ----------
-    track_p : array_like
-        TrackP values with array shape = [n_samples].
-    track_pt : array_like
-        TrackPt values with array shape = [n_samples].
-
-    Return
-    ------
-    eta : array_like
-        Pseudo rapidity values with array shape = [n_samples].
-    """
-
-    sinz = 1. * track_pt / track_p
-    z = numpy.arcsin(sinz)
-
-    eta = - numpy.log(numpy.tan(0.5 * z))
-
-    return eta
 
 def generate_plots(preds, labels, weights, data, path=''):
+
     matrix_auc_one_vs_rest = roc_auc_score_one_vs_all_for_separate_algorithms(labels, preds, weights)
     print (matrix_auc_one_vs_rest)
 
@@ -492,48 +469,29 @@ def generate_plots(preds, labels, weights, data, path=''):
     plot_roc_one_vs_one(labels, preds, weights)
     plt.savefig(os.path.join(path, 'one_vs_one_roc_auc.png'), format='png')
 
-    plot_flatness_by_particle(labels, preds, 1 / data.TrackP.values,
-                              '1/(Momentum MeV/$c$)', thresholds=[5, 20, 40, 60, 80], weights=weights,
-                              ignored_sideband=0.02)
-    plt.savefig(os.path.join(path, 'p_flatness.png'), format='png')
+    # plot_flatness_by_particle(labels, preds, 1 / data.TrackP.values,
+    #                           '1/(Momentum MeV/$c$)', thresholds=[5, 20, 40, 60, 80], weights=weights,
+    #                           ignored_sideband=0.02)
+    # plt.savefig(os.path.join(path, 'p_flatness.png'), format='png')
 
-    plot_flatness_by_particle(labels, preds, 1 / data.TrackPt.values,
+    plot_flatness_by_particle(labels, preds, 1 / data.JetPT.values,
                               '1/(Transverse Momentum MeV/$c$)', thresholds=[5, 20, 40, 60, 80], weights=weights,
                               ignored_sideband=0.02)
     plt.savefig(os.path.join(path, 'pt_flatness.png'), format='png')
 
 
-    plot_flatness_by_particle(labels, preds, get_eta(data.TrackP.values, data.TrackPt.values),
+    plot_flatness_by_particle(labels, preds, data.JetETA,
                               'Pseudo Rapidity', thresholds=[5, 20, 40, 60, 80], weights=weights,
                               ignored_sideband=0.02)
     plt.savefig(os.path.join(path, 'eta_flatness.png'), format='png')
 
 
-    plot_flatness_by_particle(labels, preds, data.NumProtoParticles.values,
-                              'NumProtoParticles', thresholds=[5, 20, 40, 60, 80], weights=weights,
-                              ignored_sideband=0.02)
-    plt.savefig(os.path.join(path, 'num_proto_particles_flatness.png'), format='png')
-
     cvm_values = compute_cvm_by_particle(labels, preds,
-                                         {'TrackP': data.TrackP.values,
-                                          'TrackPt': data.TrackPt.values,
-                                          'PseudoRapidity':get_eta(data.TrackP.values, data.TrackPt.values),
-                                          'NumProtoParticles':data.NumProtoParticles.values})
+                                         {'PT': data.JetPT.values,
+                                          'ETA':data.JetETA})
 
     print (cvm_values)
     cvm_values.to_csv(os.path.join(path, 'flatness.csv'))
-
-    plot_flatness_particle(labels, preds, 1 / data.TrackPt.values,
-                          '1/(Transverse Momentum MeV/$c$)', particle_name='Pion', thresholds=[80, 85, 90, 95],
-                           weights=weights,
-                           ignored_sideband=0.02)
-    plt.savefig(os.path.join(path, 'pt_pion_flatness.png'), format='png')
-
-    plot_flatness_particle(labels, preds, 1 / data.TrackP.values,
-                          '1/(Momentum MeV/$c$)', particle_name='Pion', thresholds=[80, 85, 90, 95],
-                           weights=weights,
-                           ignored_sideband=0.02)
-    plt.savefig(os.path.join(path, 'p_pion_flatness.png'), format='png')
 
 
 ########################## Mikhail Hushchyn Version is below ##########################################
