@@ -15,20 +15,20 @@ from rep.metaml.utils import map_on_cluster
 from rep.metaml.factory import train_estimator
 import time
 from rep.metaml import ClassifiersFactory
-import os
 
 
 
-# names_pdg_correspondence = {"Ghost": 0, "Electron": 11, "Muon": 13, "Pion": 211, "Kaon": 321, "Proton": 2212}
-# names_labels_correspondence = {"Ghost": 0, "Electron": 1, "Muon": 2, "Pion": 3, "Kaon": 4, "Proton": 5}
-pdg_names_correspondence = {0: "Ghost", 11: "Electron", 13: "Muon", 211: "Pion", 321: "Kaon", 2212: "Proton"}
-labels_names_correspondence = {0: "Ghost", 1:"Electron", 2: "Muon", 3: "Pion", 4: "Kaon", 5: "Proton"}
 
+labels_names_correspondence = {0: "b jets", 1:"c jets", 2: "light jetc"}
 labels_names_correspondence = OrderedDict(sorted(labels_names_correspondence.items()))
-pdg_names_correspondence    = OrderedDict(sorted(pdg_names_correspondence.items()))
-
-names_pdg_correspondence = OrderedDict(map(lambda (x, y): (y, x), pdg_names_correspondence.items()))
 names_labels_correspondence = OrderedDict(map(lambda (x, y): (y, x), labels_names_correspondence.items()))
+
+def names_labels_correspondence_update(new_labels_names_correspondence):
+
+    labels_names_correspondence = new_labels_names_correspondence
+    labels_names_correspondence = OrderedDict(sorted(labels_names_correspondence.items()))
+    names_labels_correspondence = OrderedDict(map(lambda (x, y): (y, x), labels_names_correspondence.items()))
+
 
 
 def shrink_floats(data):
@@ -61,52 +61,32 @@ def compute_weights(labels):
 def roc_auc_score_one_vs_all(labels, pred, sample_weight):
     """
     Compute ROC AUC values for (one vs rest).
-
-    Parameters
-    ----------
-    labels : array_like
-        Labels (0, 1, 2, ...).
-    pred : array_like or ndarray
-        Predictions. 1d to use it for each class, or ndim: each column corresponds to only one class.
-    sample_weight : array_like
-        Weights.
-
-    Return
-    ------
-    rocs : pandas.dataFrame
-        ROC AUC values for each class.
+    
+    :param array labels: labels (from 0 to 5)
+    :param array pred: 1d to use it for each class, or ndim: each column corresponds to only one class
+    :param array sample_weight: weights
+    :return: pandas.DataFrame with ROC AUC values for each class
     """
     rocs = OrderedDict()
-
     if len(pred.shape) == 1:
-        pred = numpy.vstack([pred] * len(numpy.unique(labels))).T
-
-    for label in numpy.unique(labels):
-        rocs[str(label)] = [roc_auc_score(labels == label, pred[:, label], sample_weight=sample_weight)]
+        pred = numpy.vstack([pred] * len(names_labels_correspondence.keys())).T
+    for key, label in names_labels_correspondence.items():
+        rocs[key] = [roc_auc_score(labels == label, pred[:, label], sample_weight=sample_weight)]
     return pandas.DataFrame(rocs)
 
 
 def roc_auc_score_one_vs_all_for_separate_algorithms(labels, pred, sample_weight):
     """
     Compute ROC AUC values for (one vs rest).
-
-    Parameters
-    ----------
-    labels : array)like
-        Labels (0, 1, 2, ...).
-    pred : dict
-        Predcitions for ech label to be signal.
-    sample_weight : array_like
-        Weights.
-
-    Return
-    ------
-    rocs : pandas.DataFrame
-        ROC AUC values for each class.
+    
+    :param array labels: labels (from 0 to 5)
+    :param dict pred: predcitions for ech label to be signal
+    :param array sample_weight: weights
+    :return: pandas.DataFrame with ROC AUC values for each class
     """
     rocs = OrderedDict()
-    for label in numpy.unique(labels):
-        rocs[str(label)] = [roc_auc_score(labels == label, pred[label], sample_weight=sample_weight)]
+    for key, label in names_labels_correspondence.items():
+        rocs[key] = [roc_auc_score(labels == label, pred[label], sample_weight=sample_weight)]
     return pandas.DataFrame(rocs)
 
 
@@ -131,18 +111,28 @@ def compute_cum_sum(data, features, prefix_name="", scale=False):
     return pandas.DataFrame(cum_features, index=None)
 
 
+def convert_DLL_to_LL(data, features):
+    """
+    Compute Likelihood for each particle from the DLL=Likelihood_particle - Likelihood_pion. We assume that probabilities are sum up to 1. Actually each probability is computed independently and they should not be summed up to 1.
+    
+    :param pandas.DataFrame data: data with DLL features
+    :param list features: DLL features
+    :return: pandas.DataFrame with features names + '_LL' 
+    """
+    temp_data = data[features].values
+    temp_data -= temp_data.max(axis=1, keepdims=True)
+    temp_data = numpy.exp(temp_data)
+    temp_data /= numpy.sum(temp_data, axis=1, keepdims=True)
+    return pandas.DataFrame(numpy.log(numpy.clip(temp_data, 1e-6, 10)), columns=map(lambda x: x + '_LL', features))
+
+
 def plot_hist_features(data, labels, features, bins=30, ignored_sideband=0.01):
     """
-    Plot histogram of features with values.
-
-    Parameters
-    ----------
-    data : pandas.DataFrame
-        Data with features.
-    labels : array_like
-        Labels (0, 1, 2, ...).
-    features : array_like
-        Plotted features.
+    Plot histogram of features with values > -500.
+    
+    :param pandas.DataFrame data: data with features
+    :param array labels: labels (from 0 to 5)
+    :param list features: plotted features
     """
     labels = numpy.array(labels)
     for n, f in enumerate(features):
@@ -151,8 +141,8 @@ def plot_hist_features(data, labels, features, bins=30, ignored_sideband=0.01):
         temp_labels = numpy.array(labels)[temp_values != -999]
         temp_values = temp_values[temp_values != -999]
         v_min, v_max = numpy.percentile(temp_values, [ignored_sideband * 100, (1. - ignored_sideband) * 100])
-        for label in numpy.unique(labels):
-            plt.hist(temp_values[temp_labels == label], label=str(label), alpha=0.2, normed=True, bins=bins, range=(v_min, v_max))
+        for key, val in names_labels_correspondence.items():  
+            plt.hist(temp_values[temp_labels == val], label=key, alpha=0.2, normed=True, bins=bins, range=(v_min, v_max))
         plt.legend(loc='best')
         plt.title(f)
         
@@ -233,22 +223,16 @@ def compute_cvm(predictions, masses, n_neighbours=200, step=50):
 def plot_roc_one_vs_rest(labels, predictions_dict, weights=None, physics_notion=False, predictions_dict_comparison=None, separate_particles=False, algorithms_name=('MVA', 'baseline')):
     """
     Plot roc curves one versus rest.
-
-    Parameters
-    ----------
-    labels : array_like
-        Labels (0, 1, 2, ...).
-    predictions_dict : dict
-        Dict of label/predictions.
-    weights : array_like
-        Sample weights.
+    
+    :param array labels: labels form 0 to 5
+    :param dict(array) predictions_dict: dict of label/predictions
+    :param array weights: sample weights
     """
     if separate_particles:
         plt.figure(figsize=(22, 22))
     else:
         plt.figure(figsize=(10, 8))
-
-    for label in numpy.unique(labels):
+    for label, name in labels_names_correspondence.items():
         if separate_particles:
             plt.subplot(3, 2, label + 1)
         for preds, prefix in zip([predictions_dict, predictions_dict_comparison], algorithms_name):
@@ -257,10 +241,10 @@ def plot_roc_one_vs_rest(labels, predictions_dict, weights=None, physics_notion=
             fpr, tpr, _ = roc_curve(labels == label, preds[label], sample_weight=weights)
             auc = roc_auc_score(labels == label, preds[label], sample_weight=weights)
             if physics_notion:
-                plt.plot(tpr * 100, fpr * 100, label='{}, {}, AUC={:1.5f}'.format(prefix, str(label), auc), linewidth=2)
+                plt.plot(tpr * 100, fpr * 100, label='{}, {}, AUC={:1.5f}'.format(prefix, name, auc), linewidth=2)
                 plt.yscale('log', nonposy='clip')
             else:
-                plt.plot(tpr, 1-fpr, label='{}, AUC={:1.5f}'.format(str(label), auc), linewidth=2)
+                plt.plot(tpr, 1-fpr, label='{}, AUC={:1.5f}'.format(name, auc), linewidth=2)
         if physics_notion:
             plt.xlabel('Efficiency', fontsize=22)
             plt.ylabel('Overall MisID Efficiency', fontsize=22)
@@ -273,20 +257,15 @@ def plot_roc_one_vs_rest(labels, predictions_dict, weights=None, physics_notion=
 def plot_roc_one_vs_one(labels, predictions_dict, weights=None):
     """
     Plot roc curves one versus one.
-
-    Parameters
-    ----------
-    labels : array_like
-        Labels (0, 1, 2, ...).
-    predictions_dict : dict
-        Dict of label/predictions.
-    weights : array_like
-        Sample weights.
+    
+    :param array labels: labels form 0 to 5
+    :param dict(array) predictions_dict: dict of label/predictions
+    :param array weights: sample weights
     """
     plt.figure(figsize=(22, 24))
-    for label in numpy.unique(labels):
+    for label, name in labels_names_correspondence.items():
         plt.subplot(3, 2, label + 1)
-        for label_vs in numpy.unique(labels):
+        for label_vs, name_vs in labels_names_correspondence.items():
             if label == label_vs:
                 continue
             mask = (labels == label) | (labels == label_vs)
@@ -294,7 +273,7 @@ def plot_roc_one_vs_one(labels, predictions_dict, weights=None):
                                     sample_weight=weights if weights is None else weights[mask])
             auc = roc_auc_score(labels[mask] == label, predictions_dict[label][mask],
                                 sample_weight=weights if weights is None else weights[mask])
-            plt.plot(tpr, 1-fpr, label='{} vs {}, AUC={:1.5f}'.format(str(label), str(label_vs), auc), linewidth=2)
+            plt.plot(tpr, 1-fpr, label='{} vs {}, AUC={:1.5f}'.format(name, name_vs, auc), linewidth=2)
         plt.xlabel('Signal efficiency', fontsize=22)
         plt.ylabel('Background rejection', fontsize=22)
         plt.legend(loc='best', fontsize=18)
@@ -304,29 +283,24 @@ def compute_roc_auc_matrix(labels, predictions_dict, weights=None):
     """
     Calculate class vs class roc aucs matrix.
     
-    Parameters
-    ----------
-    labels : array_like
-        Labels (0, 1, 2, ...).
-    predictions_dict : dict
-        Dict of label/predictions.
-    weights : array_like
-        Sample weights.
+    :param array labels: labels form 0 to 5
+    :param dict(array) predictions_dict: dict of label/predictions
+    :param array weights: sample weights
     """
 
     # Calculate roc_auc_matrices
 
-    roc_auc_matrices = numpy.ones(shape=[len(numpy.unique(labels))] * 2)
-    for label in numpy.unique(labels):
-        for label_vs in numpy.unique(labels):
+    roc_auc_matrices = numpy.ones(shape=[len(labels_names_correspondence)] * 2)
+    for label, name in labels_names_correspondence.items():
+        for label_vs, name_vs in labels_names_correspondence.items():
             if label == label_vs:
                 continue
             mask = (labels == label) | (labels == label_vs)
             roc_auc_matrices[label, label_vs] = roc_auc_score(labels[mask] == label, predictions_dict[label][mask],
                                                               sample_weight=weights if weights is None else weights[mask])
         
-    matrix = pandas.DataFrame(roc_auc_matrices, columns=[str(i) for i in numpy.unique(labels)],
-                              index=[str(i) for i in numpy.unique(labels)])
+    matrix = pandas.DataFrame(roc_auc_matrices, columns=names_labels_correspondence.keys(),
+                              index=names_labels_correspondence.keys())
 
     fig=plot_matrix(matrix)
     return fig, matrix
@@ -358,9 +332,8 @@ def plot_flatness_by_particle(labels, predictions_dict, spectator, spectator_nam
                               names_algorithms=['MVA', 'Baseline'],
                               weights=None, bins_number=30, ignored_sideband=0.1, 
                               thresholds=None, cuts_values=False, ncol=1):
-
     plt.figure(figsize=(22, 20))
-    for n, (label) in enumerate(numpy.unique(labels)):
+    for n, (name, label) in enumerate(names_labels_correspondence.items()):
         plt.subplot(3, 2, n + 1)
         mask =labels == label
         legends = []
@@ -381,9 +354,9 @@ def plot_flatness_by_particle(labels, predictions_dict, spectator, spectator_nam
             for thr in thresholds_values:
                 eff[thr] = (eff[thr][0], 100*numpy.array(eff[thr][1]), 100*numpy.array(eff[thr][2]), eff[thr][3])
             plot_fig = ErrorPlot(eff)
-            plot_fig.xlabel = '{} {}'.format(str(label), spectator_name)
+            plot_fig.xlabel = '{} {}'.format(name, spectator_name)
             plot_fig.ylabel = 'Efficiency'
-            plot_fig.title = str(label)
+            plot_fig.title = name
             plot_fig.ylim = (0, 100)
             plot_fig.plot(fontsize=22)
             plt.xticks(fontsize=12), plt.yticks(fontsize=12)
@@ -394,11 +367,10 @@ def plot_flatness_by_particle(labels, predictions_dict, spectator, spectator_nam
 def plot_flatness_particle(labels, predictions_dict, spectator, spectator_name, particle_name, 
                            weights=None, bins_number=30, ignored_sideband=0.1, 
                            thresholds=None, cuts_values=False):
-
     plt.figure(figsize=(18, 22))
-    for n, (label) in enumerate(numpy.unique(labels)):
+    for n, (name, label) in enumerate(names_labels_correspondence.items()):
         plt.subplot(3, 2, n + 1)
-        mask = labels == label
+        mask = labels == names_labels_correspondence[particle_name]
         probs = predictions_dict[label][mask]
         mask_signal = labels == label
         probs_signal = predictions_dict[label][mask_signal]
@@ -417,7 +389,7 @@ def plot_flatness_particle(labels, predictions_dict, spectator, spectator_name, 
         plot_fig = ErrorPlot(eff)
         plot_fig.xlabel = '{} {}'.format(particle_name, spectator_name)
         plot_fig.ylabel = 'Efficiency'
-        plot_fig.title = 'MVA {}'.format(str(label))
+        plot_fig.title = 'MVA {}'.format(name)
         plot_fig.ylim = (0, 100)
         plot_fig.plot(fontsize=22)
         plt.xticks(fontsize=12), plt.yticks(fontsize=12)
@@ -426,35 +398,19 @@ def plot_flatness_particle(labels, predictions_dict, spectator, spectator_name, 
 
     
 def compute_cvm_by_particle(labels, predictions_dict, spectators):
-
     cvm_values = defaultdict(list)
     for spectator_name, spectator in spectators.items():
-        for n, (label) in enumerate(numpy.unique(labels)):
+        for n, (name, label) in enumerate(names_labels_correspondence.items()):
             mask =labels == label
             probs = predictions_dict[label][mask]
             cvm_values[spectator_name].append(compute_cvm(probs, spectator[mask]))
-    return pandas.DataFrame(cvm_values, index=[str(i) for i in numpy.unique(labels)])
+    return pandas.DataFrame(cvm_values, index=names_labels_correspondence.keys())
 
 
-def compute_eta(track_p, track_pt):
-
-    """
-    Calculate pseudo rapidity values
-    
-    :param track_p: array, shape = [n_samples], TrackP values.
-    :param track_pt: array, shape = [n_samples], TrackPt values.
-    :return: array, shape = [n_samples], Pseudo Rapdity values.
-    """
-
-    sinz = 1. * track_pt / track_p
-    z = numpy.arcsin(sinz)
-    eta = - numpy.log(numpy.tan(0.5 * z))
-
-    return eta
+import os
 
 
 def generate_plots(preds, labels, weights, data, path=''):
-
     matrix_auc_one_vs_rest = roc_auc_score_one_vs_all_for_separate_algorithms(labels, preds, weights)
     print (matrix_auc_one_vs_rest)
 
@@ -481,15 +437,15 @@ def generate_plots(preds, labels, weights, data, path=''):
     plt.savefig(os.path.join(path, 'pt_flatness.png'), format='png')
 
 
-    plot_flatness_by_particle(labels, preds, data.JetEta,
+    plot_flatness_by_particle(labels, preds, data.JetEta.values,
                               'Pseudo Rapidity', thresholds=[5, 20, 40, 60, 80], weights=weights,
                               ignored_sideband=0.02)
     plt.savefig(os.path.join(path, 'eta_flatness.png'), format='png')
 
 
     cvm_values = compute_cvm_by_particle(labels, preds,
-                                         {'PT': data.JetPT.values,
-                                          'ETA':data.JetEta})
+                                         {'Pt': data.JetPT.values,
+                                          'Eta':data.JetEta.values,})
 
     print (cvm_values)
     cvm_values.to_csv(os.path.join(path, 'flatness.csv'))
