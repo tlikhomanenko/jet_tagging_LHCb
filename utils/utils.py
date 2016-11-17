@@ -357,8 +357,9 @@ def plot_flatness_by_particle(labels, predictions_dict, spectator, spectator_nam
                               names_algorithms=['MVA', 'Baseline'],
                               weights=None, bins_number=30, ignored_sideband=0.1, 
                               thresholds=None, cuts_values=False, ncol=1):
+
     plt.figure(figsize=(22, 20))
-    for n, (name, label) in enumerate(names_labels_correspondence.items()):
+    for n, (label) in enumerate(numpy.unique(labels)):
         plt.subplot(3, 2, n + 1)
         mask =labels == label
         legends = []
@@ -379,9 +380,9 @@ def plot_flatness_by_particle(labels, predictions_dict, spectator, spectator_nam
             for thr in thresholds_values:
                 eff[thr] = (eff[thr][0], 100*numpy.array(eff[thr][1]), 100*numpy.array(eff[thr][2]), eff[thr][3])
             plot_fig = ErrorPlot(eff)
-            plot_fig.xlabel = '{} {}'.format(name, spectator_name)
+            plot_fig.xlabel = '{} {}'.format(str(label), spectator_name)
             plot_fig.ylabel = 'Efficiency'
-            plot_fig.title = name
+            plot_fig.title = str(label)
             plot_fig.ylim = (0, 100)
             plot_fig.plot(fontsize=22)
             plt.xticks(fontsize=12), plt.yticks(fontsize=12)
