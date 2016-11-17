@@ -104,7 +104,7 @@ def roc_auc_score_one_vs_all_for_separate_algorithms(labels, pred, sample_weight
         ROC AUC values for each class.
     """
     rocs = OrderedDict()
-    for label in numpy.array(labels):
+    for label in numpy.unique(labels):
         rocs[str(label)] = [roc_auc_score(labels == label, pred[label], sample_weight=sample_weight)]
     return pandas.DataFrame(rocs)
 
@@ -272,15 +272,20 @@ def plot_roc_one_vs_rest(labels, predictions_dict, weights=None, physics_notion=
 def plot_roc_one_vs_one(labels, predictions_dict, weights=None):
     """
     Plot roc curves one versus one.
-    
-    :param array labels: labels form 0 to 5
-    :param dict(array) predictions_dict: dict of label/predictions
-    :param array weights: sample weights
+
+    Parameters
+    ----------
+    labels : array_like
+        Labels (0, 1, 2, ...).
+    predictions_dict : dict
+        Dict of label/predictions.
+    weights : array_like
+        Sample weights.
     """
     plt.figure(figsize=(22, 24))
-    for label, name in labels_names_correspondence.items():
+    for label in numpy.unique(labels):
         plt.subplot(3, 2, label + 1)
-        for label_vs, name_vs in labels_names_correspondence.items():
+        for label_vs in numpy.unique(labels):
             if label == label_vs:
                 continue
             mask = (labels == label) | (labels == label_vs)
@@ -288,7 +293,7 @@ def plot_roc_one_vs_one(labels, predictions_dict, weights=None):
                                     sample_weight=weights if weights is None else weights[mask])
             auc = roc_auc_score(labels[mask] == label, predictions_dict[label][mask],
                                 sample_weight=weights if weights is None else weights[mask])
-            plt.plot(tpr, 1-fpr, label='{} vs {}, AUC={:1.5f}'.format(name, name_vs, auc), linewidth=2)
+            plt.plot(tpr, 1-fpr, label='{} vs {}, AUC={:1.5f}'.format(str(label), str(label_vs), auc), linewidth=2)
         plt.xlabel('Signal efficiency', fontsize=22)
         plt.ylabel('Background rejection', fontsize=22)
         plt.legend(loc='best', fontsize=18)
