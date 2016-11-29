@@ -1,2 +1,3 @@
-# jet_tagging_LHCb
-Identification of beauty and charm quark jets at LHCb
+# LHCb Jet Tagging
+
+![jets](pic/jets1.png)
